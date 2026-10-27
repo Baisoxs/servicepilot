@@ -1,0 +1,72 @@
+# ServicePilot —— 本地开发依赖
+#
+# 只放中间件：postgres(pgvector) + redis + minio。
+# api 用 `make dev` 跑在本机 .venv 里，改代码自动热重载；
+# 等以后需要整包部署，再加 api 服务和 Dockerfile。
+#
+# 用法：make up / make down / make ps / make logs
+
+name: servicepilot
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: servicepilot-postgres
+    environment:
+      # 默认值跟 .env.example 一致
+      POSTGRES_USER: ${POSTGRES_USER:-servicepilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-servicepilot}
+      POSTGRES_DB: ${POSTGRES_DB:-servicepilot}
+    ports:
+      # 只绑 127.0.0.1：本机能连，局域网连不上
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # 具名卷：数据住在 Docker 的数据盘里（D:\soft\DockerData），容器删了数据还在
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-servicepilot} -d ${POSTGRES_DB:-servicepilot}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: servicepilot-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    # MinIO 官方已停止免费发布镜像（Docker Hub 2025-10 下架、quay.io 2026-09 禁止匿名拉取），
+    # 改用社区分支 SILO（MinIO 的维护版分支）。命令、环境变量、端口、/data 路径全部兼容，
+    # 对外仍然是 S3 API，代码侧无感知。服务名保留 minio，跟 .env 里的 MINIO_* 对应。
+    image: pgsty/silo:RELEASE.2026-10-18T00-00-00Z
+    container_name: servicepilot-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "127.0.0.1:9000:9000"   # S3 API，代码里连这个
+      - "127.0.0.1:9001:9001"   # 网页控制台，浏览器打开
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "silo", "healthcheck", "ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
