@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     minio_endpoint: str = "localhost:9000"
     minio_bucket: str = "servicepilot"
 
+    # ---- Auth ----
+    # 本地开发默认值；生产必须用环境变量 JWT_SECRET 覆盖成长随机串。
+    # 生成方式：python -c "import secrets; print(secrets.token_urlsafe(48))"
+    jwt_secret: str = "dev-only-secret-change-me-0123456789abcdef"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
+
     # ---- App ----
     app_env: str = "local"
     log_level: str = "INFO"

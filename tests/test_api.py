@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 
 from apps.api import main
+from apps.api.routers import chat, health
 
 client = TestClient(main.app)
 
@@ -17,7 +18,7 @@ def test_readyz_ok(monkeypatch) -> None:
     async def fake_ok(host: str, port: int) -> bool:
         return True
 
-    monkeypatch.setattr(main, "_tcp_ok", fake_ok)
+    monkeypatch.setattr(health, "_tcp_ok", fake_ok)
     resp = client.get("/readyz")
     assert resp.status_code == 200
     assert resp.json()["ready"] is True
@@ -27,7 +28,7 @@ def test_readyz_degraded(monkeypatch) -> None:
     async def fake_fail(host: str, port: int) -> bool:
         return False
 
-    monkeypatch.setattr(main, "_tcp_ok", fake_fail)
+    monkeypatch.setattr(health, "_tcp_ok", fake_fail)
     resp = client.get("/readyz")
     assert resp.status_code == 503
     assert resp.json()["ready"] is False
@@ -43,7 +44,7 @@ def test_chat_stream(monkeypatch) -> None:
         for piece in ["你", "好"]:
             yield piece
 
-    monkeypatch.setattr(main, "astream", fake_stream)
+    monkeypatch.setattr(chat, "astream", fake_stream)
     with client.stream("POST", "/v1/chat", json={"message": "hi"}) as resp:
         assert resp.status_code == 200
         body = "".join(resp.iter_text())
