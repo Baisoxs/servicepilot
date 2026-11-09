@@ -1,64 +1,32 @@
-"""ServicePilot API 入口。"""
-
-import asyncio
-import json
-from collections.abc import AsyncIterator
+"""ServicePilot API 入口：只负责组装应用。"""
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
 
-from packages.core.llm import astream
-
-app = FastAPI(title="ServicePilot API", version="0.1.0")
+from apps.api.errors import register_exception_handlers
+from apps.api.middleware import TraceIdMiddleware
+from apps.api.routers import auth, chat, conversations, health, messages
 
 
-@app.get("/healthz")
-async def healthz() -> dict[str, str]:
-    """存活探针：进程能响应就算健康。"""
-    return {"status": "ok"}
+def create_app() -> FastAPI:
+    """创建一个 FastAPI 实例。
+
+    路由注册、中间件、异常处理器都集中放在这里，
+    方便测试时按需组装不同的实例。
+    """
+    app = FastAPI(title="ServicePilot API", version="0.1.0")
+
+    # trace_id 要在请求进入路由前生成，错误处理器才能把它写进错误体
+    app.add_middleware(TraceIdMiddleware)
+    # 所有异常在这里统一翻译成 {code, message, detail, trace_id}
+    register_exception_handlers(app)
+
+    app.include_router(health.router)
+    app.include_router(chat.router)
+    app.include_router(auth.router)
+    app.include_router(conversations.router)
+    app.include_router(messages.router)
+    return app
 
 
-async def _tcp_ok(host: str, port: int) -> bool:
-    """能建立 TCP 连接就算通（浅检查，不验证账号密码）。"""
-    try:
-        _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=1)
-        writer.close()
-        await writer.wait_closed()
-        return True
-    except (OSError, TimeoutError):
-        return False
-
-
-@app.get("/readyz")
-async def readyz() -> JSONResponse:
-    """就绪探针：依赖都连得上才算就绪。"""
-    checks = {
-        "postgres": await _tcp_ok("127.0.0.1", 5432),
-        "redis": await _tcp_ok("127.0.0.1", 6379),
-        "minio": await _tcp_ok("127.0.0.1", 9000),
-    }
-    ok = all(checks.values())
-    return JSONResponse(
-        status_code=200 if ok else 503,
-        content={"ready": ok, "checks": checks},
-    )
-
-
-class ChatRequest(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
-
-
-async def _sse(prompt: str) -> AsyncIterator[str]:
-    """把模型输出包装成 SSE 格式。"""
-    try:
-        async for piece in astream(prompt):
-            yield f"data: {json.dumps({'delta': piece}, ensure_ascii=False)}\n\n"
-    except Exception as exc:
-        yield f"data: {json.dumps({'error': str(exc)}, ensure_ascii=False)}\n\n"
-    yield "data: [DONE]\n\n"
-
-
-@app.post("/v1/chat")
-async def chat_endpoint(req: ChatRequest) -> StreamingResponse:
-    return StreamingResponse(_sse(req.message), media_type="text/event-stream")
+# uvicorn 的入口是 apps.api.main:app，模块里必须有一个 app 对象
+app = create_app()
