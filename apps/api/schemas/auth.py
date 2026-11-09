@@ -17,8 +17,12 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class RegisterRequest(BaseModel):
     """注册请求。密码长度在这里就校验，不合格的请求到不了 service。"""
 
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"email": "alice@example.com", "password": "password123"}]}
+    )
+
+    email: EmailStr = Field(examples=["alice@example.com"])
+    password: str = Field(min_length=8, max_length=128, examples=["password123"])
 
 
 class LoginRequest(BaseModel):
@@ -28,18 +32,34 @@ class LoginRequest(BaseModel):
     而且早期用户的短密码会被无辜挡住。
     """
 
-    email: EmailStr
-    password: str
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"email": "alice@example.com", "password": "password123"}]}
+    )
+
+    email: EmailStr = Field(examples=["alice@example.com"])
+    password: str = Field(examples=["password123"])
 
 
 class RefreshRequest(BaseModel):
     """换新 token 的请求。refresh_token 放在请求体，不放 URL。"""
 
-    refresh_token: str
+    refresh_token: str = Field(examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."])
 
 
 class TokenResponse(BaseModel):
     """登录 / 换 token 成功的响应。"""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "token_type": "bearer",
+                }
+            ]
+        }
+    )
 
     access_token: str
     refresh_token: str
@@ -53,7 +73,18 @@ class UserOut(BaseModel):
     from_attributes=True 允许 Pydantic 直接从 ORM 对象身上读属性。
     """
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": "6f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f",
+                    "email": "alice@example.com",
+                    "created_at": "2026-11-09T08:00:00Z",
+                }
+            ]
+        },
+    )
 
     id: UUID
     email: str

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from apps.api.errors import register_exception_handlers
 from apps.api.middleware import TraceIdMiddleware
-from apps.api.routers import auth, chat, conversations, health
+from apps.api.routers import auth, chat, conversations, health, messages
 
 
 def create_app() -> FastAPI:
@@ -24,6 +24,7 @@ def create_app() -> FastAPI:
     app.include_router(chat.router)
     app.include_router(auth.router)
     app.include_router(conversations.router)
+    app.include_router(messages.router)
     return app
 
 

@@ -40,12 +40,13 @@ def test_framework_404_uses_unified_shape() -> None:
 
 
 def test_validation_error_uses_unified_shape() -> None:
-    resp = client.post("/v1/chat", json={"message": ""})
+    # 用公开的登录接口：缺字段在进 handler 之前就被拦下，不需要登录和数据库
+    resp = client.post("/v1/auth/login", json={})
     assert resp.status_code == 422
     body = resp.json()
     assert body["code"] == "VALIDATION_ERROR"
     assert body["message"] == "请求参数校验失败"
-    assert body["detail"][0]["loc"] == ["body", "message"]
+    assert body["detail"][0]["loc"] == ["body", "email"]
     assert body["trace_id"]
 
 
