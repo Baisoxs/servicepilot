@@ -34,6 +34,8 @@ class Settings(BaseSettings):
 
     # ---- Redis ----
     redis_url: str = "redis://localhost:6379/0"
+    # 会话列表缓存有效期（秒）。每个用户的每个分页 key 各自倒计时。
+    conversation_cache_ttl_s: int = 60
 
     # ---- MinIO / S3 ----
     minio_root_user: str = "minioadmin"
