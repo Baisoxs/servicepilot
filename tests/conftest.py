@@ -13,10 +13,13 @@ from collections.abc import Callable, Iterator
 
 import psycopg
 import pytest
+import redis
+from redis import Redis
 from fastapi.testclient import TestClient
 
 from apps.api.main import create_app
 from packages.core.config import get_settings
+
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -103,3 +106,27 @@ def make_auth(client: TestClient, cleanup_emails: list[str]) -> Callable[[], dic
         return {"Authorization": f"Bearer {logged_in.json()['access_token']}"}
 
     return _make
+
+def _redis_available() -> bool:
+    try:
+        client = Redis.from_url(get_settings().redis_url, socket_connect_timeout=2)
+        client.ping()
+        client.close()
+        return True
+    except redis.RedisError:
+        return False
+
+
+@pytest.fixture(scope="session")
+def redis_available() -> None:
+    """Redis 没起来时，依赖它的测试自动 skip，而不是报一堆连接错误。"""
+    if not _redis_available():
+        pytest.skip("Redis 未启动（先 make up）")
+
+
+@pytest.fixture
+def redis_client(redis_available: None) -> Iterator[Redis]:
+    """同步 Redis 客户端，测试里只用来准备/清理数据。"""
+    client = Redis.from_url(get_settings().redis_url, decode_responses=True)
+    yield client
+    client.close()

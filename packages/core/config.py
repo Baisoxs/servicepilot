@@ -34,6 +34,13 @@ class Settings(BaseSettings):
 
     # ---- Redis ----
     redis_url: str = "redis://localhost:6379/0"
+    # 会话列表缓存有效期（秒）。每个用户的每个分页 key 各自倒计时。
+    conversation_cache_ttl_s: int = 60
+
+    # ---- 限流 ----
+    # 每个用户在一个窗口内最多能发多少次 /v1/chat
+    rate_limit_chat_limit: int = 20
+    rate_limit_chat_window_s: int = 60
 
     # ---- MinIO / S3 ----
     minio_root_user: str = "minioadmin"
@@ -52,6 +59,15 @@ class Settings(BaseSettings):
     # ---- App ----
     app_env: str = "local"
     log_level: str = "INFO"
+
+    # ---- 流式 ----
+    llm_max_concurrency: int = 4
+    llm_timeout_s: float = 30.0
+    llm_max_retries: int = 2
+    llm_retry_base_delay: float = 0.5
+    llm_retry_max_delay: float = 8.0
+    # SSE 心跳间隔：超过这个秒数没有新数据，就发一行注释保活
+    sse_heartbeat_s: float = 15.0
 
 
 @lru_cache
