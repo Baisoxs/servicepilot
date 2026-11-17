@@ -53,6 +53,15 @@ class Settings(BaseSettings):
     app_env: str = "local"
     log_level: str = "INFO"
 
+    # ---- 流式 ----
+    llm_max_concurrency: int = 4
+    llm_timeout_s: float = 30.0
+    llm_max_retries: int = 2
+    llm_retry_base_delay: float = 0.5
+    llm_retry_max_delay: float = 8.0
+    # SSE 心跳间隔：超过这个秒数没有新数据，就发一行注释保活
+    sse_heartbeat_s: float = 15.0
+
 
 @lru_cache
 def get_settings() -> Settings:
