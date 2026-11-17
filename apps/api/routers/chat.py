@@ -18,7 +18,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.deps import get_current_user
+from apps.api.deps import enforce_chat_rate_limit, get_current_user
 from apps.api.services.messages import MessageService
 from packages.core.config import get_settings
 from packages.core.llm import astream
@@ -101,6 +101,7 @@ async def chat_endpoint(
     req: ChatRequest,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
+    _: None = Depends(enforce_chat_rate_limit),
 ) -> StreamingResponse:
     # 先落用户消息：这一步同时校验了会话属于当前用户
     await MessageService(session).create(

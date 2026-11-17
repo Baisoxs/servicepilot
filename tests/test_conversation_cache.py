@@ -13,31 +13,6 @@ from fastapi.testclient import TestClient
 from redis import Redis
 
 from apps.api.services import conversation_cache
-from packages.core.config import get_settings
-
-
-def _redis_up() -> bool:
-    try:
-        client = Redis.from_url(get_settings().redis_url, socket_connect_timeout=2)
-        client.ping()
-        client.close()
-        return True
-    except redis.RedisError:
-        return False
-
-
-@pytest.fixture(scope="session")
-def redis_available() -> None:
-    if not _redis_up():
-        pytest.skip("Redis 未启动（先 make up）")
-
-
-@pytest.fixture
-def redis_client(redis_available: None) -> Iterator[Redis]:
-    client = Redis.from_url(get_settings().redis_url, decode_responses=True)
-    yield client
-    client.close()
-
 
 @pytest.fixture
 def cache_keys(redis_client: Redis) -> Iterator[list[str]]:

@@ -174,3 +174,25 @@ def register_exception_handlers(app: FastAPI) -> None:
             message="服务器内部错误",
             detail=None,
         )
+
+class ForbiddenError(AppError):
+    status_code = 403
+    code = "FORBIDDEN"
+
+
+class RateLimitedError(AppError):
+    """429：请求太频繁。
+
+    Retry-After 是 429 的标准响应头，告诉客户端「几秒后再来」，
+    浏览器和 SDK 会照着它退避重试。
+    """
+
+    status_code = 429
+    code = "RATE_LIMITED"
+
+    def __init__(self, message: str, *, retry_after_s: int, detail: Any = None) -> None:
+        super().__init__(
+            message,
+            detail=detail,
+            headers={"Retry-After": str(retry_after_s)},
+        )

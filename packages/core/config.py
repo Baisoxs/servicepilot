@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     # 会话列表缓存有效期（秒）。每个用户的每个分页 key 各自倒计时。
     conversation_cache_ttl_s: int = 60
 
+    # ---- 限流 ----
+    # 每个用户在一个窗口内最多能发多少次 /v1/chat
+    rate_limit_chat_limit: int = 20
+    rate_limit_chat_window_s: int = 60
+
     # ---- MinIO / S3 ----
     minio_root_user: str = "minioadmin"
     minio_root_password: str = "minioadmin"
