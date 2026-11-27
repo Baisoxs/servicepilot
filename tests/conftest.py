@@ -14,12 +14,11 @@ from collections.abc import Callable, Iterator
 import psycopg
 import pytest
 import redis
-from redis import Redis
 from fastapi.testclient import TestClient
+from redis import Redis
 
 from apps.api.main import create_app
 from packages.core.config import get_settings
-
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -106,6 +105,7 @@ def make_auth(client: TestClient, cleanup_emails: list[str]) -> Callable[[], dic
         return {"Authorization": f"Bearer {logged_in.json()['access_token']}"}
 
     return _make
+
 
 def _redis_available() -> bool:
     try:

@@ -175,10 +175,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             detail=None,
         )
 
-class ForbiddenError(AppError):
-    status_code = 403
-    code = "FORBIDDEN"
-
 
 class RateLimitedError(AppError):
     """429：请求太频繁。

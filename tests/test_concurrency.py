@@ -95,4 +95,3 @@ def test_blocking_sleep_serializes(
     assert statuses == [200, 200]
     # 两个 0.5 秒只能排队，总耗时 1.0 秒以上
     assert elapsed > 0.95
-
