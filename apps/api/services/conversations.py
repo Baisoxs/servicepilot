@@ -45,10 +45,7 @@ class ConversationService:
         )
         # ORM 对象不能直接塞进 JSON（datetime、UUID 都不是 JSON 原生类型），
         # 先转成「只含基本类型」的字典，datetime 会变成 ISO 字符串
-        payload = [
-            ConversationOut.model_validate(item).model_dump(mode="json")
-            for item in items
-        ]
+        payload = [ConversationOut.model_validate(item).model_dump(mode="json") for item in items]
         # ③ 抄一张便签贴回 Redis
         await conversation_cache.set_list(
             user_id,

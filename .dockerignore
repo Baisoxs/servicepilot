@@ -1,0 +1,26 @@
+# ---- 版本控制 / CI ----
+.git
+.gitignore
+.github
+
+# ---- 本机 Python 环境 ----
+# Windows 的 .venv 里是 .exe 和绝对路径，搬进 Linux 镜像一定不能用
+.venv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# ---- 秘密 ----
+.env
+.env.*
+
+# ---- 不用进镜像的开发文件 ----
+tests/
+docs/
+evals/
+infra/
+.vscode/
+.idea/

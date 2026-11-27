@@ -95,5 +95,3 @@ async def invalidate_user(user_id: UUID) -> None:
         await get_redis().incr(_version_key(user_id))
     except (RedisError, OSError) as exc:
         logger.warning("失效会话缓存失败：%s", exc)
-
-

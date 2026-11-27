@@ -80,5 +80,3 @@ async def check_sliding_window(key: str, *, limit: int, window_s: int) -> RateLi
     except (RedisError, OSError):
         return RateLimitResult(allowed=True, retry_after_ms=0)
     return RateLimitResult(allowed=bool(allowed), retry_after_ms=int(retry_after))
-
-

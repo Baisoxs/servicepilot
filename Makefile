@@ -12,12 +12,13 @@ PORT    ?= 8000
 COMPOSE ?= docker compose -f infra/docker-compose.yml
 
 .DEFAULT_GOAL := help
-.PHONY: help install dev up down restart logs ps test lint fmt typecheck check clean
+.PHONY: help install dev web up down restart logs ps test lint fmt typecheck check clean
 
 help:
 	@echo "ServicePilot - available targets"
 	@echo "  make install    install deps (incl. dev tools)"
 	@echo "  make dev        run API locally with reload, port $(PORT)"
+	@echo "  make web        run Streamlit UI locally, port 8501"
 	@echo "  make up         start compose stack (api/postgres/redis/minio)"
 	@echo "  make down       stop and remove compose stack"
 	@echo "  make restart    restart compose stack"
@@ -31,10 +32,13 @@ help:
 	@echo "  make clean      remove caches"
 
 install:
-	$(PYTHON) -m pip install -e ".[dev]"
+	$(PYTHON) -m pip install -e ".[dev,web]"
 
 dev:
 	$(PYTHON) -m uvicorn apps.api.main:app --reload --host 0.0.0.0 --port $(PORT)
+
+web:
+	$(PYTHON) -m streamlit run apps/web/app.py --server.port 8501
 
 up:
 	$(COMPOSE) up -d --build

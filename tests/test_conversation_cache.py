@@ -14,6 +14,7 @@ from redis import Redis
 
 from apps.api.services import conversation_cache
 
+
 @pytest.fixture
 def cache_keys(redis_client: Redis) -> Iterator[list[str]]:
     """测试里碰过的 Redis key，结束时统一删掉，别污染本机数据。"""
@@ -130,7 +131,8 @@ def test_delete_invalidates_cache(
     conversation = _create(client, headers, title="待删除")
     assert client.get("/v1/conversations", headers=headers).json()["total"] == 1
 
-    assert client.delete(f"/v1/conversations/{conversation['id']}", headers=headers).status_code == 204
+    resp = client.delete(f"/v1/conversations/{conversation['id']}", headers=headers)
+    assert resp.status_code == 204
 
     # 删完列表立刻变成空，不会还显示缓存中的那一条
     assert client.get("/v1/conversations", headers=headers).json()["total"] == 0
