@@ -31,7 +31,7 @@ help:
 	@echo "  make clean      remove caches"
 
 install:
-	$(PYTHON) -m pip install -e ".[dev]"
+	$(PYTHON) -m pip install -e ".[dev,web]"
 
 dev:
 	$(PYTHON) -m uvicorn apps.api.main:app --reload --host 0.0.0.0 --port $(PORT)
